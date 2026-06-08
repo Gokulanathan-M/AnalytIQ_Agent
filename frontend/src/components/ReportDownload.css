@@ -1,0 +1,112 @@
+.report-section { display: flex; flex-direction: column; gap: 16px; }
+
+.report-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 28px;
+}
+
+.report-icon-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.report-pdf-icon {
+  font-size: 52px;
+  line-height: 1;
+  transition: transform 0.4s ease;
+}
+.report-pdf-icon--done {
+  animation: pop 0.4s ease;
+}
+@keyframes pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.report-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.report-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.report-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.report-path {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.report-path-label { color: var(--text-muted); }
+.report-path code {
+  font-family: var(--font-mono);
+  background: rgba(59,130,246,0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--accent-blue);
+  font-size: 11px;
+}
+
+.report-actions {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.download-btn {
+  min-width: 160px;
+  justify-content: center;
+  font-size: 15px;
+  padding: 14px 24px;
+}
+
+.report-meta {
+  display: flex;
+  gap: 6px;
+}
+
+/* Feature chips row */
+.report-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.report-feature-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(16,24,44,0.7);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: var(--transition);
+}
+.report-feature-chip:hover {
+  border-color: var(--border-bright);
+  color: var(--text-primary);
+}
+
+@media (max-width: 640px) {
+  .report-card { flex-direction: column; align-items: center; text-align: center; }
+  .report-actions { align-items: center; }
+}

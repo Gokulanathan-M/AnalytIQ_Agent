@@ -1,0 +1,102 @@
+.upload-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.upload-description {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.upload-description strong { color: var(--accent-blue); }
+
+.dropzone {
+  cursor: pointer;
+  padding: 40px 32px;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dropzone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(59,130,246,0.04), transparent 70%);
+  pointer-events: none;
+}
+
+.dropzone:hover:not(.dropzone--uploading) {
+  border-color: var(--accent-blue);
+  box-shadow: var(--glow-blue), inset 0 0 40px rgba(59,130,246,0.03);
+}
+
+.dropzone--active {
+  border-color: var(--accent-cyan) !important;
+  box-shadow: var(--glow-cyan), inset 0 0 40px rgba(6,182,212,0.05) !important;
+  background: rgba(6,182,212,0.05) !important;
+}
+
+.dropzone--reject {
+  border-color: var(--accent-red) !important;
+  box-shadow: 0 0 20px rgba(239,68,68,0.3) !important;
+}
+
+.dropzone--uploading { cursor: not-allowed; }
+
+.dropzone-inner { position: relative; z-index: 1; }
+
+.upload-idle-state,
+.upload-progress-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.upload-icon {
+  font-size: 48px;
+  line-height: 1;
+  transition: transform 0.3s ease;
+}
+.upload-icon.active { animation: bounce 0.6s ease infinite alternate; }
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+
+.upload-main-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.upload-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.upload-filename {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-blue);
+  font-family: var(--font-mono);
+}
+
+.upload-formats {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.upload-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: var(--radius-md);
+  color: #fca5a5;
+  font-size: 14px;
+}
