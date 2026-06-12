@@ -196,6 +196,65 @@ async def download_report(session_id: str):
     )
 
 
+@router.get("/download-cleaned/{session_id}", summary="Download the cleaned dataset")
+async def download_cleaned(
+    session_id: str,
+    format: str = Query("csv", description="Format to download: 'csv' or 'excel'"),
+):
+    """
+    Returns the cleaned dataset for a completed session in CSV or Excel format.
+    """
+    session = _sessions.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found.")
+
+    state = session.get("state")
+    if not state:
+        raise HTTPException(status_code=400, detail="Analysis not yet run.")
+
+    df = state.get("dataset")
+    if df is None:
+        raise HTTPException(status_code=404, detail="Cleaned dataset not found.")
+
+    # Restore original column names for the download using the column mapping if available
+    df = df.copy()
+    metadata = state.get("metadata", {})
+    mapping = metadata.get("column_mapping", {})
+    if mapping:
+        inv_mapping = {clean_col: orig_col for orig_col, clean_col in mapping.items()}
+        df = df.rename(columns=inv_mapping)
+
+    os.makedirs(os.path.join(settings.report_dir, "..", "exports"), exist_ok=True)
+    export_dir = os.path.normpath(os.path.join(settings.report_dir, "..", "exports"))
+
+    file_name = session.get("file_name", "dataset")
+    base_name = os.path.splitext(file_name)[0]
+    clean_name = base_name.replace(" ", "_")
+
+    if format.lower() == "csv":
+        export_path = os.path.join(export_dir, f"{clean_name}_cleaned.csv")
+        df.to_csv(export_path, index=False)
+        media_type = "text/csv"
+        dl_filename = f"{clean_name}_cleaned.csv"
+    elif format.lower() in ("excel", "xlsx"):
+        export_path = os.path.join(export_dir, f"{clean_name}_cleaned.xlsx")
+        df.to_excel(export_path, index=False, engine="openpyxl")
+        media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        dl_filename = f"{clean_name}_cleaned.xlsx"
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported format '{format}'. Use 'csv' or 'excel'."
+        )
+
+    return FileResponse(
+        path=export_path,
+        filename=dl_filename,
+        media_type=media_type,
+    )
+
+
+
 @router.get("/charts/{session_id}/{chart_name}", summary="Get a chart image (Base64)")
 async def get_chart(session_id: str, chart_name: str):
     """

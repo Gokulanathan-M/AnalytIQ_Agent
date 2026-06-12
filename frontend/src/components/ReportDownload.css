@@ -1,11 +1,27 @@
 .report-section { display: flex; flex-direction: column; gap: 16px; }
 
+.report-cards-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
 .report-card {
   display: flex;
-  align-items: flex-start;
-  gap: 24px;
+  flex-direction: column; /* Stack vertically for balanced design in grid layout */
+  align-items: stretch;
+  gap: 20px;
   padding: 28px;
+  justify-content: space-between;
+  height: 100%;
 }
+
+@media (max-width: 900px) {
+  .report-cards-container {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 .report-icon-wrap {
   flex-shrink: 0;
@@ -65,16 +81,18 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 10px;
+  width: 100%;
 }
 
 .download-btn {
-  min-width: 160px;
+  width: 100%;
   justify-content: center;
   font-size: 15px;
   padding: 14px 24px;
 }
+
 
 .report-meta {
   display: flex;

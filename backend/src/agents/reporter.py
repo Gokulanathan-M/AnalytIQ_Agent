@@ -165,7 +165,7 @@ def _cover_page(elements: list, styles: dict, state: AnalystState):
     elements.append(PageBreak())
 
 
-def _section_overview(elements: list, styles: dict, state: AnalystState):
+def _section_overview(elements: list, styles: dict, state: AnalystState, inv_mapping: dict):
     elements.append(Paragraph("1. Dataset Overview & Data Quality", styles["h1"]))
     elements.append(_hr())
 
@@ -173,20 +173,25 @@ def _section_overview(elements: list, styles: dict, state: AnalystState):
     statistics = state.get("statistics", {})
     shape      = statistics.get("shape", meta.get("shape", {}))
 
+    # Map columns back to original names for overview presentation
+    num_cols = [inv_mapping.get(c, c) for c in meta.get("numeric_columns", [])]
+    cat_cols = [inv_mapping.get(c, c) for c in meta.get("categorical_columns", [])]
+    dt_cols  = [inv_mapping.get(c, c) for c in meta.get("datetime_columns", [])]
+
     rows = [
         ["Dataset Name",     str(meta.get("file_name", "N/A"))],
         ["Rows",             f"{shape.get('rows', 'N/A'):,}"],
         ["Columns",          str(shape.get('columns', 'N/A'))],
-        ["Numeric Columns",  ", ".join(meta.get("numeric_columns", [])) or "None"],
-        ["Categorical Cols", ", ".join(meta.get("categorical_columns", [])) or "None"],
-        ["Datetime Cols",    ", ".join(meta.get("datetime_columns", [])) or "None"],
+        ["Numeric Columns",  ", ".join(num_cols) or "None"],
+        ["Categorical Cols", ", ".join(cat_cols) or "None"],
+        ["Datetime Cols",    ", ".join(dt_cols) or "None"],
     ]
 
     # Missing value summary
     null_pcts = meta.get("null_percentages", {})
     if null_pcts:
         worst = sorted(null_pcts.items(), key=lambda x: x[1], reverse=True)[:5]
-        worst_str = "; ".join([f"{c}: {v:.1f}%" for c, v in worst if v > 0]) or "No missing values"
+        worst_str = "; ".join([f"{inv_mapping.get(c, c)}: {v:.1f}%" for c, v in worst if v > 0]) or "No missing values"
         rows.append(["Top Missing Cols", worst_str])
 
     elements.append(_kv_table(rows, styles))
@@ -212,7 +217,7 @@ def _section_cleaning(elements: list, styles: dict, state: AnalystState):
     elements.append(Spacer(1, 0.3 * cm))
 
 
-def _section_statistics(elements: list, styles: dict, state: AnalystState):
+def _section_statistics(elements: list, styles: dict, state: AnalystState, inv_mapping: dict):
     elements.append(Paragraph("3. Statistical Analysis", styles["h1"]))
     elements.append(_hr())
 
@@ -230,7 +235,7 @@ def _section_statistics(elements: list, styles: dict, state: AnalystState):
     table_data = [headers]
     for col, s in descriptive.items():
         table_data.append([
-            col,
+            inv_mapping.get(col, col),
             f"{s.get('count', 0):,}",
             f"{s.get('mean', 0):.3f}",
             f"{s.get('median', 0):.3f}",
@@ -270,7 +275,9 @@ def _section_statistics(elements: list, styles: dict, state: AnalystState):
                 strength = "Moderate"
             else:
                 strength = "Weak"
-            corr_data.append([pair["col_a"], pair["col_b"], f"{r:.4f}", strength])
+            col_a = inv_mapping.get(pair["col_a"], pair["col_a"])
+            col_b = inv_mapping.get(pair["col_b"], pair["col_b"])
+            corr_data.append([col_a, col_b, f"{r:.4f}", strength])
 
         t2 = Table(corr_data, colWidths=[4*cm, 4*cm, 3*cm, 3*cm], repeatRows=1)
         t2.setStyle(TableStyle([
@@ -288,7 +295,7 @@ def _section_statistics(elements: list, styles: dict, state: AnalystState):
         elements.append(Spacer(1, 0.3 * cm))
 
 
-def _section_visualizations(elements: list, styles: dict, state: AnalystState):
+def _section_visualizations(elements: list, styles: dict, state: AnalystState, inv_mapping: dict):
     elements.append(Paragraph("4. Visualizations", styles["h1"]))
     elements.append(_hr())
 
@@ -308,9 +315,14 @@ def _section_visualizations(elements: list, styles: dict, state: AnalystState):
     for key, b64 in charts.items():
         if not b64:
             continue
-        title = chart_titles.get(key, key.replace("_", " ").title())
-        if key.startswith("bar_"):
-            title = f"Value Distribution — {key[4:].replace('_', ' ').title()}"
+        title = chart_titles.get(key)
+        if not title:
+            if key.startswith("bar_"):
+                col_name = key[4:]
+                orig_col = inv_mapping.get(col_name, col_name.replace('_', ' ').title())
+                title = f"Value Distribution — {orig_col}"
+            else:
+                title = key.replace("_", " ").title()
 
         elements.append(Paragraph(title, styles["h2"]))
         img = _b64_to_image(b64, width=15 * cm)
@@ -357,7 +369,7 @@ def _section_insights(elements: list, styles: dict, state: AnalystState):
             elements.append(Paragraph(f"✔  {rec}", styles["bullet"]))
 
 
-def _section_appendix(elements: list, styles: dict, state: AnalystState):
+def _section_appendix(elements: list, styles: dict, state: AnalystState, inv_mapping: dict):
     elements.append(PageBreak())
     elements.append(Paragraph("Appendix — Column Metadata", styles["h1"]))
     elements.append(_hr())
@@ -379,7 +391,7 @@ def _section_appendix(elements: list, styles: dict, state: AnalystState):
         sample_vals = samples.get(col, [])
         sample_str = ", ".join([str(v) for v in sample_vals[:3]])
         data.append([
-            col,
+            inv_mapping.get(col, col),
             str(dtypes.get(col, "N/A")),
             f"{nulls.get(col, 0):.1f}%",
             str(uniques.get(col, "N/A")),
@@ -427,17 +439,21 @@ def reporter_node(state: AnalystState) -> Dict[str, Any]:
     styles   = _build_styles()
     elements = []
 
+    meta = state.get("metadata", {})
+    mapping = meta.get("column_mapping", {})
+    inv_mapping = {v: k for k, v in mapping.items()} if mapping else {}
+
     _cover_page(elements, styles, state)
-    _section_overview(elements, styles, state)
+    _section_overview(elements, styles, state, inv_mapping)
     elements.append(PageBreak())
     _section_cleaning(elements, styles, state)
     elements.append(PageBreak())
-    _section_statistics(elements, styles, state)
+    _section_statistics(elements, styles, state, inv_mapping)
     elements.append(PageBreak())
-    _section_visualizations(elements, styles, state)
+    _section_visualizations(elements, styles, state, inv_mapping)
     elements.append(PageBreak())
     _section_insights(elements, styles, state)
-    _section_appendix(elements, styles, state)
+    _section_appendix(elements, styles, state, inv_mapping)
 
     # Page number footer
     def _add_footer(canvas, doc):

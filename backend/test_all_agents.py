@@ -38,27 +38,27 @@ failed = 0
 
 
 def section(title: str):
-    print(f"\n{BOLD}{CYAN}{'═'*55}{RESET}")
+    print(f"\n{BOLD}{CYAN}{'='*55}{RESET}")
     print(f"{BOLD}{CYAN}  {title}{RESET}")
-    print(f"{BOLD}{CYAN}{'═'*55}{RESET}")
+    print(f"{BOLD}{CYAN}{'='*55}{RESET}")
 
 
 def ok(msg: str):
     global passed
     passed += 1
-    print(f"  {GREEN}✅ PASS{RESET}  {msg}")
+    print(f"  {GREEN}PASS{RESET}  {msg}")
 
 
 def fail(msg: str, detail: str = ""):
     global failed
     failed += 1
-    print(f"  {RED}❌ FAIL{RESET}  {msg}")
+    print(f"  {RED}FAIL{RESET}  {msg}")
     if detail:
         print(f"         {RED}{detail}{RESET}")
 
 
 def info(msg: str):
-    print(f"  {YELLOW}ℹ  {msg}{RESET}")
+    print(f"  {YELLOW}INFO  {msg}{RESET}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -94,8 +94,8 @@ def test_upload() -> str | None:
             data = r.json()
             session_id = data.get("session_id")
             ok(f"File uploaded successfully.")
-            info(f"Session ID → {session_id}")
-            info(f"File saved → {data.get('file_path')}")
+            info(f"Session ID -> {session_id}")
+            info(f"File saved -> {data.get('file_path')}")
             return session_id
         else:
             fail(f"Upload failed with status {r.status_code}", r.text[:300])
@@ -107,7 +107,7 @@ def test_upload() -> str | None:
 
 def test_analyze(session_id: str) -> dict | None:
     section("TEST 3: Full Analysis Pipeline (All 6 Agents)")
-    info("Running: Loader → Cleaner → Analyzer → Visualizer → InsightGen → ReportGen")
+    info("Running: Loader -> Cleaner -> Analyzer -> Visualizer -> InsightGen -> ReportGen")
     info("This may take 30-90 seconds (includes Gemini API call)...")
 
     try:
@@ -134,7 +134,7 @@ def test_analyze(session_id: str) -> dict | None:
             cleaning = data.get("cleaning_log", [])
             ok(f"Cleaning agent: {len(cleaning)} cleaning operations logged.")
             for step in cleaning[:4]:
-                info(f"  → {step}")
+                info(f"  -> {step}")
 
             # Check statistics
             stats = data.get("statistics", {})
@@ -142,11 +142,11 @@ def test_analyze(session_id: str) -> dict | None:
             ok(f"Analyzer: Dataset shape = {shape.get('rows')} rows × {shape.get('columns')} columns")
             top_corrs = stats.get("top_correlations", [])
             if top_corrs:
-                ok(f"Analyzer: Top correlation = {top_corrs[0]['col_a']} ↔ {top_corrs[0]['col_b']} (r={top_corrs[0]['correlation']:.3f})")
+                ok(f"Analyzer: Top correlation = {top_corrs[0]['col_a']} <-> {top_corrs[0]['col_b']} (r={top_corrs[0]['correlation']:.3f})")
 
             # Check charts
             charts = data.get("chart_names", [])
-            ok(f"Visualizer: {len(charts)} charts generated → {charts}")
+            ok(f"Visualizer: {len(charts)} charts generated -> {charts}")
 
             # Check insights
             insights = data.get("insights", "")
@@ -161,7 +161,7 @@ def test_analyze(session_id: str) -> dict | None:
             if recs:
                 ok(f"Insight Agent: {len(recs)} recommendations generated.")
                 for r_item in recs[:2]:
-                    info(f"  → {r_item}")
+                    info(f"  -> {r_item}")
             else:
                 fail("Insight Agent: No recommendations found.")
 
@@ -178,7 +178,7 @@ def test_analyze(session_id: str) -> dict | None:
             # Print error log if any
             errors = data.get("error_log", [])
             if errors:
-                print(f"\n  {YELLOW}⚠  Error log:{RESET}")
+                print(f"\n  {YELLOW}WARNING  Error log:{RESET}")
                 for e in errors:
                     info(f"  {e}")
 
@@ -210,7 +210,7 @@ def test_download_pdf(session_id: str):
                     f.write(r.content)
                 size_kb = len(r.content) / 1024
                 ok(f"PDF downloaded successfully ({size_kb:.1f} KB)")
-                info(f"Saved to → {save_path}")
+                info(f"Saved to -> {save_path}")
             else:
                 fail("Response is not a PDF.", f"Content-Type: {content_type}")
         else:
@@ -276,7 +276,7 @@ def main():
     if failed:
         print(f"  {RED}Failed: {failed}/{total}{RESET}")
     else:
-        print(f"  {BOLD}{GREEN}🎉 All tests passed! System is fully operational.{RESET}")
+        print(f"  {BOLD}{GREEN}All tests passed! System is fully operational.{RESET}")
     print()
 
 
