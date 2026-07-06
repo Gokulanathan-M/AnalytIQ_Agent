@@ -159,20 +159,26 @@ def chat_node(state: AnalystState) -> Dict[str, Any]:
             ]
         else:
             # Add self-correction context
-            last_failed = failed_attempts_log[-1]
-            correction_prompt = (
-                f"Your previous Python code failed with the following error:\n\n"
-                f"```\n{last_failed['error']}\n```\n\n"
-                f"Here is the code you wrote:\n```python\n{last_failed['code']}\n```\n\n"
-                f"Please review the column names: {list(df.columns)} and data types carefully.\n"
-                f"Write a corrected block of Python code. Remember to store your final answer in the `result` variable."
-            )
-            messages_to_send = [
-                SystemMessage(content=CHAT_SYSTEM_PROMPT),
-                HumanMessage(content=user_content),
-                AIMessage(content=last_failed['raw_response']),
-                HumanMessage(content=correction_prompt),
-            ]
+            if not failed_attempts_log:
+                messages_to_send = [
+                    SystemMessage(content=CHAT_SYSTEM_PROMPT),
+                    HumanMessage(content=user_content),
+                ]
+            else:
+                last_failed = failed_attempts_log[-1]
+                correction_prompt = (
+                    f"Your previous Python code failed with the following error:\n\n"
+                    f"```\n{last_failed['error']}\n```\n\n"
+                    f"Here is the code you wrote:\n```python\n{last_failed['code']}\n```\n\n"
+                    f"Please review the column names: {list(df.columns)} and data types carefully.\n"
+                    f"Write a corrected block of Python code. Remember to store your final answer in the `result` variable."
+                )
+                messages_to_send = [
+                    SystemMessage(content=CHAT_SYSTEM_PROMPT),
+                    HumanMessage(content=user_content),
+                    AIMessage(content=last_failed['raw_response']),
+                    HumanMessage(content=correction_prompt),
+                ]
             
         try:
             response = llm.invoke(messages_to_send)
@@ -212,10 +218,13 @@ def chat_node(state: AnalystState) -> Dict[str, Any]:
             return {"messages": [AIMessage(content=answer)]}
 
     # If we run out of attempts
-    last_failed = failed_attempts_log[-1]
-    answer = (
-        f"I tried to answer your question but the code execution failed after {attempts} attempts:\n\n"
-        f"```\n{last_failed['error']}\n```\n\n"
-        f"Last generated code:\n```python\n{last_failed['code']}\n```"
-    )
+    if not failed_attempts_log:
+        answer = "I tried to answer your question but encountered repeated model connection errors."
+    else:
+        last_failed = failed_attempts_log[-1]
+        answer = (
+            f"I tried to answer your question but the code execution failed after {attempts} attempts:\n\n"
+            f"```\n{last_failed['error']}\n```\n\n"
+            f"Last generated code:\n```python\n{last_failed['code']}\n```"
+        )
     return {"messages": [AIMessage(content=answer)]}
